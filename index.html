@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-do Calendar</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f6fa;
+      color: #222;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+
+    .calendar,
+    .todo-panel {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .calendar-header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .nav-buttons button {
+      border: none;
+      background: #222;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .nav-buttons button:hover {
+      background: #444;
+    }
+
+    .weekdays,
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .weekday {
+      text-align: center;
+      font-weight: 700;
+      color: #777;
+      padding: 10px 0;
+    }
+
+    .day {
+      min-height: 95px;
+      border: 1px solid #e2e2e2;
+      background: #fafafa;
+      border-radius: 14px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+      position: relative;
+      transition: 0.15s;
+    }
+
+    .day:hover {
+      background: #eef3ff;
+      border-color: #7aa7ff;
+    }
+
+    .day.empty {
+      background: transparent;
+      border: none;
+      cursor: default;
+    }
+
+    .day.today {
+      border: 2px solid #222;
+    }
+
+    .day.selected {
+      background: #dce8ff;
+      border-color: #2f6df6;
+    }
+
+    .date-number {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .todo-count {
+      display: inline-block;
+      margin-top: 28px;
+      font-size: 13px;
+      background: #2f6df6;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .todo-panel h2 {
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    .selected-date {
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    .input-row button {
+      border: none;
+      background: #2f6df6;
+      color: white;
+      padding: 0 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .input-row button:hover {
+      background: #1f55c8;
+    }
+
+    .todo-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      background: #fafafa;
+    }
+
+    .todo-item span {
+      flex: 1;
+    }
+
+    .todo-item.done span {
+      text-decoration: line-through;
+      color: #999;
+    }
+
+    .delete-btn {
+      border: none;
+      background: #ff4d4f;
+      color: white;
+      padding: 6px 9px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .empty-message {
+      color: #888;
+      font-size: 14px;
+    }
+
+    @media (max-width: 850px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .day {
+        min-height: 70px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <section class="calendar">
+      <div class="calendar-header">
+        <h1 id="monthTitle"></h1>
+
+        <div class="nav-buttons">
+          <button id="prevBtn">‹</button>
+          <button id="nextBtn">›</button>
+        </div>
+      </div>
+
+      <div class="weekdays">
+        <div class="weekday">일</div>
+        <div class="weekday">월</div>
+        <div class="weekday">화</div>
+        <div class="weekday">수</div>
+        <div class="weekday">목</div>
+        <div class="weekday">금</div>
+        <div class="weekday">토</div>
+      </div>
+
+      <div class="days" id="dayGrid"></div>
+    </section>
+
+    <aside class="todo-panel">
+      <h2>To-do List</h2>
+      <p class="selected-date" id="selectedDateText"></p>
+
+      <div class="input-row">
+        <input
+          id="todoInput"
+          type="text"
+          placeholder="할 일을 입력하세요"
+        />
+        <button id="addTodoBtn">추가</button>
+      </div>
+
+      <ul class="todo-list" id="todoList"></ul>
+    </aside>
+  </main>
+
+  <script>
+    const monthTitle = document.getElementById("monthTitle");
+    const dayGrid = document.getElementById("dayGrid");
+    const selectedDateText = document.getElementById("selectedDateText");
+    const todoInput = document.getElementById("todoInput");
+    const addTodoBtn = document.getElementById("addTodoBtn");
+    const todoList = document.getElementById("todoList");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    let currentDate = new Date();
+    let selectedDate = formatDate(new Date());
+    let todos = loadTodos();
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseDateKey(dateKey) {
+      const [year, month, day] = dateKey.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    function loadTodos() {
+      try {
+        return JSON.parse(localStorage.getItem("calendarTodos")) || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveTodos() {
+      localStorage.setItem("calendarTodos", JSON.stringify(todos));
+    }
+
+    function createTodoId() {
+      if (window.crypto && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+
+      return `${Date.now()}-${Math.random()}`;
+    }
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      monthTitle.textContent = `${year}년 ${month + 1}월`;
+      dayGrid.innerHTML = "";
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+
+      const startWeekday = firstDay.getDay();
+      const totalDays = lastDay.getDate();
+
+      for (let i = 0; i < startWeekday; i++) {
+        const emptyCell = document.createElement("div");
+        emptyCell.className = "day empty";
+        dayGrid.appendChild(emptyCell);
+      }
+
+      for (let day = 1; day <= totalDays; day++) {
+        const date = new Date(year, month, day);
+        const dateKey = formatDate(date);
+
+        const dayButton = document.createElement("button");
+        dayButton.type = "button";
+        dayButton.className = "day";
+
+        if (dateKey === formatDate(new Date())) {
+          dayButton.classList.add("today");
+        }
+
+        if (dateKey === selectedDate) {
+          dayButton.classList.add("selected");
+        }
+
+        const todoCount = todos[dateKey] ? todos[dateKey].length : 0;
+
+        dayButton.innerHTML = `
+          <div class="date-number">${day}</div>
+          ${todoCount > 0 ? `<div class="todo-count">${todoCount}개</div>` : ""}
+        `;
+
+        dayButton.addEventListener("click", () => {
+          selectedDate = dateKey;
+          renderCalendar();
+          renderTodos();
+        });
+
+        dayGrid.appendChild(dayButton);
+      }
+    }
+
+    function renderTodos() {
+      const date = parseDateKey(selectedDate);
+
+      selectedDateText.textContent = date.toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "long"
+      });
+
+      todoList.innerHTML = "";
+
+      const selectedTodos = todos[selectedDate] || [];
+
+      if (selectedTodos.length === 0) {
+        const emptyMessage = document.createElement("p");
+        emptyMessage.className = "empty-message";
+        emptyMessage.textContent = "아직 등록된 할 일이 없습니다.";
+        todoList.appendChild(emptyMessage);
+        return;
+      }
+
+      selectedTodos.forEach((todo) => {
+        const item = document.createElement("li");
+        item.className = `todo-item ${todo.done ? "done" : ""}`;
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = todo.done;
+
+        checkbox.addEventListener("change", () => {
+          toggleTodo(todo.id);
+        });
+
+        const text = document.createElement("span");
+        text.textContent = todo.text;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete-btn";
+        deleteButton.textContent = "삭제";
+
+        deleteButton.addEventListener("click", () => {
+          deleteTodo(todo.id);
+        });
+
+        item.appendChild(checkbox);
+        item.appendChild(text);
+        item.appendChild(deleteButton);
+
+        todoList.appendChild(item);
+      });
+    }
+
+    function addTodo() {
+      const text = todoInput.value.trim();
+
+      if (!text) return;
+
+      if (!todos[selectedDate]) {
+        todos[selectedDate] = [];
+      }
+
+      todos[selectedDate].push({
+        id: createTodoId(),
+        text,
+        done: false
+      });
+
+      todoInput.value = "";
+
+      saveTodos();
+      renderCalendar();
+      renderTodos();
+    }
+
+    function toggleTodo(todoId) {
+      todos[selectedDate] = todos[selectedDate].map((todo) => {
+        if (todo.id === todoId) {
+          return {
+            ...todo,
+            done: !todo.done
+          };
+        }
+
+        return todo;
+      });
+
+      saveTodos();
+      renderTodos();
+    }
+
+    function deleteTodo(todoId) {
+      todos[selectedDate] = todos[selectedDate].filter((todo) => {
+        return todo.id !== todoId;
+      });
+
+      if (todos[selectedDate].length === 0) {
+        delete todos[selectedDate];
+      }
+
+      saveTodos();
+      renderCalendar();
+      renderTodos();
+    }
+
+    prevBtn.addEventListener("click", () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    });
+
+    nextBtn.addEventListener("click", () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    addTodoBtn.addEventListener("click", addTodo);
+
+    todoInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        addTodo();
+      }
+    });
+
+    renderCalendar();
+    renderTodos();
+  </script>
+</body>
+</html>
